@@ -1,10 +1,6 @@
 import uuid
 from abc import ABC, abstractmethod
 
-
-# =====================================================================
-# OUTILS (Méthodes Statiques)
-# =====================================================================
 class Outils:
     @staticmethod
     def generer_id(prefixe="ID"):
@@ -20,18 +16,13 @@ class Outils:
             return round(tarif * 0.8, 2)
         return round(tarif, 2)
 
-
-# =====================================================================
-# CLASSIFICATION DES SÉANCES (Abstraction & Polymorphisme)
-# =====================================================================
 class Seance(ABC):
     def __init__(self, nom, coach):
         self.id_seance = Outils.generer_id("SEA")
         self.nom = nom
         self.coach = coach
-        self.participants = []  # Liste d'objets Membre
-        self.liste_attente = []  # Bonus supplémentaire : liste d'attente intégrée
-
+        self.participants = []  
+        self.liste_attente = []  
     @abstractmethod
     def calculer_tarif(self):
         """Calcule le tarif de base de la séance."""
@@ -64,10 +55,10 @@ class CoursCollectif(Seance):
         self.cout_base = float(cout_base)
 
     def capacite_max(self):
-        return 15  # Limite fixée à 15 participants
+        return 15  
 
     def calculer_tarif(self):
-        # Évite la division par zéro si aucun participant n'est encore inscrit
+        
         nb_part = len(self) if len(self) > 0 else 1
         return round(self.cout_base / nb_part, 2)
 
@@ -78,15 +69,11 @@ class CoachingPersonnel(Seance):
         self.tarif_horaire = float(tarif_horaire)
 
     def capacite_max(self):
-        return 1  # Individuel uniquement
+        return 1 
 
     def calculer_tarif(self):
         return round(self.tarif_horaire, 2)
 
-
-# =====================================================================
-# MEMBRE
-# =====================================================================
 class Membre:
     def __init__(self, nom, age):
         self.id_membre = Outils.generer_id("MEM")
@@ -94,8 +81,8 @@ class Membre:
         try:
             self.age = int(age)
         except ValueError:
-            self.age = 18  # Valeur par défaut en cas d'erreur
-        self.reservations = []  # Liste de séances réservées
+            self.age = 18  
+        self.reservations = []  
 
     def reserver(self, seance):
         """Ajoute une séance aux réservations du membre."""
@@ -117,17 +104,13 @@ class Membre:
     def __str__(self):
         return f"[{self.id_membre}] {self.nom} ({self.age} ans) - {len(self)} réservation(s)"
 
-
-# =====================================================================
-# SALLE DE SPORT (Gestionnaire central)
-# =====================================================================
 class Salle:
-    nb_reservations_total = 0  # Compteur partagé globalement
+    nb_reservations_total = 0  
 
     def __init__(self, nom):
         self.nom = nom
-        self.seances = {}  # id_seance -> Objet Seance
-        self.membres = {}  # id_membre -> Objet Membre
+        self.seances = {}  
+        self.membres = {}  
 
     def inscrire_membre(self, nom, age):
         nouveau = Membre(nom, age)
@@ -154,10 +137,9 @@ class Salle:
             print("⚠️ Ce membre a déjà réservé cette séance.")
             return False
 
-        # Vérification de la capacité
         if len(seance) >= seance.capacite_max():
             print(f"❌ La séance est complète ({seance.capacite_max()} places max).")
-            # Proposer la liste d'attente (Fonctionnalité Bonus choisie)
+        
             reponse = input("Voulez-vous inscrire le membre sur la liste d'attente ? (o/n) : ").strip().lower()
             if reponse == 'o':
                 if membre not in seance.liste_attente:
@@ -167,7 +149,6 @@ class Salle:
                     print("⚠️ Le membre est déjà dans la liste d'attente.")
             return False
 
-        # Inscription effective
         seance.participants.append(membre)
         membre.reserver(seance)
         Salle.nb_reservations_total += 1
@@ -186,13 +167,11 @@ class Salle:
             print("❌ Erreur : Aucune réservation active trouvée pour ce membre sur cette séance.")
             return False
 
-        # Retrait
         seance.participants.remove(membre)
         membre.annuler(seance)
         Salle.nb_reservations_total = max(0, Salle.nb_reservations_total - 1)
         print(f"✔️ Réservation annulée pour {membre.nom}.")
 
-        # Gestion de la liste d'attente (si une place se libère)
         if seance.liste_attente:
             prochain_membre = seance.liste_attente.pop(0)
             print(f"🔔 Une place se libère ! Attribution automatique à {prochain_membre.nom} (liste d'attente).")
@@ -202,7 +181,6 @@ class Salle:
 
         return True
 
-    # --- RECHERCHE AVANCÉE (Fonctionnalité bonus avec **kwargs) ---
     def rechercher_avancee(self, **kwargs):
         """
         Filtres possibles : coach, type_seance, disponible (True/False)
@@ -225,7 +203,6 @@ class Salle:
 
         return resultats
 
-    # --- STATISTIQUES & TRI (Fonctionnalité bonus avec sorted()) ---
     def afficher_statistiques(self):
         print("\n" + "=" * 40)
         print("          STATISTIQUES DE LA SALLE      ")
@@ -238,17 +215,12 @@ class Salle:
             print("• Aucune séance enregistrée pour établir un classement.")
             return
 
-        # Tri des séances par popularité (nombre d'inscrits)
         seances_triees = sorted(self.seances.values(), key=lambda s: len(s), reverse=True)
 
         print("\n🏆 CLASSEMENT DE POPULARITÉ DES SÉANCES :")
         for i, s in enumerate(seances_triees, 1):
             print(f"  {i}. {s.nom} ({len(s)} participants)")
 
-
-# =====================================================================
-# SÉCURISATION DES ENTRÉES (Fonctionnalité bonus : 3 essais max)
-# =====================================================================
 def input_securise(prompt, type_attendu=str, min_val=None, max_val=None):
     """Demande une saisie à l'utilisateur avec un maximum de 3 essais."""
     tentatives = 3
@@ -272,19 +244,13 @@ def input_securise(prompt, type_attendu=str, min_val=None, max_val=None):
     print("⛔ Trop de tentatives infructueuses. Retour au menu principal.")
     return None
 
-
-# =====================================================================
-# INITIALISATION DU JEU DE DONNÉES DE DÉMONSTRATION
-# =====================================================================
 def initialiser_demonstration(salle):
     print("\n--- Initialisation du jeu de données de démonstration ---")
 
-    # 1. Ajout de 3 membres
-    m1 = salle.inscrire_membre("Alice Cooper", 17)  # Mineur -> Réduction
+    m1 = salle.inscrire_membre("Alice Cooper", 17)  
     m2 = salle.inscrire_membre("Bob Marley", 45)
-    m3 = salle.inscrire_membre("Charlie Chaplin", 72)  # Senior -> Réduction
+    m3 = salle.inscrire_membre("Charlie Chaplin", 72)  
 
-    # 2. Ajout de 6 séances (3 Collectives, 3 Coachings)
     s1 = CoursCollectif("Vinyasa Yoga Zen", "Sarah", cout_base=120.0)
     s2 = CoursCollectif("Cardio Boxing", "Mike", cout_base=180.0)
     s3 = CoursCollectif("Pilates Abdos", "Sarah", cout_base=150.0)
@@ -296,26 +262,18 @@ def initialiser_demonstration(salle):
     for s in [s1, s2, s3, s4, s5, s6]:
         salle.ajouter_seance(s)
 
-    # Force une capacité maximale de 1 sur s1 pour la démo de saturation
-    # (Par défaut les collectifs ont 15 places, nous modifions temporairement pour l'exemple)
     s1.capacite_max = lambda: 1
 
-    # 3. Réalisation de 5 réservations
     print("\n--- Simulation de réservations ---")
-    salle.reserver_seance(m1.id_membre, s1.id_seance)  # Alice réserve Yoga (Yoga est maintenant COMPLET)
-    salle.reserver_seance(m1.id_membre, s4.id_seance)  # Alice réserve Coaching Mike
-    salle.reserver_seance(m2.id_membre, s2.id_seance)  # Bob réserve Boxe
-    salle.reserver_seance(m2.id_membre, s5.id_seance)  # Bob réserve Coaching Jean
-    salle.reserver_seance(m3.id_membre, s2.id_seance)  # Charlie réserve Boxe
+    salle.reserver_seance(m1.id_membre, s1.id_seance)  
+    salle.reserver_seance(m1.id_membre, s4.id_seance) 
+    salle.reserver_seance(m2.id_membre, s2.id_seance)  
+    salle.reserver_seance(m2.id_membre, s5.id_seance)  
+    salle.reserver_seance(m3.id_membre, s2.id_seance)  
 
-    # 4. Tentative de réservation sur un cours complet (pour prouver la gestion d'erreur)
     print("\n--- Tentative sur cours complet (Yoga - Max 1 place, déjà prise par Alice) ---")
-    salle.reserver_seance(m2.id_membre, s1.id_seance)  # Bob tente de réserver Yoga
+    salle.reserver_seance(m2.id_membre, s1.id_seance) 
 
-
-# =====================================================================
-# MENU INTERACTIF PRINCIPAL
-# =====================================================================
 def afficher_menu():
     print("\n" + "=" * 45)
     print("           FITZONE - MENU GESTION           ")
